@@ -1,5 +1,6 @@
+/* eslint-disable no-global-assign */
 /* eslint-disable linebreak-style */
-require = ('dotenv').config();
+require('dotenv').config();
 const Hapi = require('@hapi/hapi');
 const songs = require('./api/songs');
 const SongsService = require('./services/postgres/SongsService');
