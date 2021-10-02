@@ -20,7 +20,7 @@ class AuthenticationsService {
       text: 'SELECT token FROM authentications WHERE token = $1',
       values: [token],
     };
-    console.log(query.values);
+
     const result = await this._pool.query(query);
 
     if (!result.rows.length) {
