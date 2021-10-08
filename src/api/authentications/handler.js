@@ -12,14 +12,15 @@ class AuthenticationsHandler {
   }
 
   async postAuthenticationHandler(request, h) {
-    const { payload: requestPayload } = request;
-    this._validator.validatePostAuthenticationPayload(requestPayload);
-    const id = await this._usersService.verifyUserCredential(requestPayload);
+    this._validator.validatePostAuthenticationPayload(request.payload);
 
+    const { username, password } = request.payload;
+    const id = await this._usersService.verifyUserCredential({ username, password });
     const accessToken = this._tokenManager.generateAccessToken({ id });
     const refreshToken = this._tokenManager.generateRefreshToken({ id });
 
     await this._authenticationsService.addRefreshToken(refreshToken);
+
     return successResponse(h, {
       withMessage: true,
       withData: true,
@@ -34,6 +35,7 @@ class AuthenticationsHandler {
 
   async putAuthenticationHandler(request, h) {
     this._validator.validatePutAuthenticationPayload(request.payload);
+
     const { refreshToken } = request.payload;
     await this._authenticationsService.verifyRefreshToken(refreshToken);
     const { id } = this._tokenManager.verifyRefreshToken(refreshToken);
