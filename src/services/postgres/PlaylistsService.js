@@ -30,13 +30,15 @@ class PlaylistsService {
 
   async getPlaylists(owner) {
     const query = {
-      text: `SELECT playlists.*,users.username FROM playlists
+      text: `SELECT playlists.id, playlists.name, users.username FROM playlists
         LEFT JOIN collaborations ON collaborations.playlist_id = playlists.id
         LEFT JOIN users ON users.id = playlists.owner
         WHERE playlists.owner = $1 OR collaborations.user_id = $1`,
       values: [owner],
     };
+
     const result = await this._pool.query(query);
+
     return result.rows.map(mapDBToPlaylist);
   }
 
@@ -66,7 +68,7 @@ class PlaylistsService {
     const result = await this._pool.query(query);
 
     if (!result.rowCount) {
-      throw new NotFoundError('Gagal memperbarui playlist.Id tidak ditemukan');
+      throw new NotFoundError('Gagal memperbarui playlist. Id tidak ditemukan');
     }
   }
 
@@ -79,7 +81,7 @@ class PlaylistsService {
     const result = await this._pool.query(query);
 
     if (!result.rowCount) {
-      throw new NotFoundError('Playlist gagal dihapus.Id tidak ditemukan');
+      throw new NotFoundError('Playlist gagal dihapus. Id tidak ditemukan');
     }
   }
 
@@ -123,10 +125,13 @@ class PlaylistsService {
       text: 'INSERT INTO playlistsongs VALUES($1,$2,$3) RETURNING id',
       values: [id, playlistId, songId],
     };
+
     const result = await this._pool.query(query);
+
     if (!result.rowCount) {
       throw new InvariantError('lagu gagal ditambahkan ke playlist');
     }
+
     return result.rows[0].id;
   }
 
@@ -137,7 +142,9 @@ class PlaylistsService {
       WHERE playlistsongs.playlist_id = $1 GROUP BY songs.id`,
       values: [playlistId],
     };
+
     const result = await this._pool.query(query);
+
     return result.rows.map(mapDBToModel);
   }
 
@@ -148,6 +155,7 @@ class PlaylistsService {
     };
 
     const result = await this._pool.query(query);
+
     if (!result.rowCount) {
       throw new InvariantError('Lagu gagal dihapus dari playlist.Id lagu tidak ditemukan');
     }

@@ -11,7 +11,7 @@ class PlaylistsHandler {
 
   async postToPlaylistHandler(request, h) {
     this._validator.validatePlaylistPayload(request.payload);
-    console.log('euy');
+
     const { name } = request.payload;
     const { id: credentialId } = request.auth.credentials;
     const playlistId = await this._service.addPlaylist({
@@ -31,7 +31,7 @@ class PlaylistsHandler {
 
   async getFromPlaylistsHandler(request, h) {
     const { id: credentialId } = request.auth.credentials;
-    const playlists = await this._service.getPlaylists({ credentialId });
+    const playlists = await this._service.getPlaylists(credentialId);
 
     return successResponse(h, {
       withData: true,
@@ -43,8 +43,8 @@ class PlaylistsHandler {
 
   async getFromPlaylistByIdHandler(request, h) {
     const { id } = request.params;
-
     const { id: credentialId } = request.auth.credentials;
+
     await this._service.verifyPlaylistAccess(id, credentialId);
 
     const playlist = await this._service.getPlaylistById(id);
