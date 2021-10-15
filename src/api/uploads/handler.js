@@ -17,7 +17,9 @@ class UploadsHandler {
     const pictureUrl = `http://${process.env.HOST}:${process.env.PORT}/upload/pictures/${filename}`;
 
     return successResponse(h, {
+      withMessage: true,
       withData: true,
+      responseMessage: 'Gambar berhasil diunggah',
       responseData: {
         pictureUrl,
       },
