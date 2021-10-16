@@ -6,9 +6,10 @@ const AuthorizationError = require('../../exceptions/AuthorizationError');
 const { mapDBToModel, mapDBToPlaylist } = require('../../utils/model');
 
 class PlaylistsService {
-  constructor(collaborationService) {
+  constructor(collaborationService, cacheService) {
     this._pool = new Pool();
     this._collaborationService = collaborationService;
+    this._cacheService = cacheService;
   }
 
   async addPlaylist({ name, owner }) {
@@ -126,6 +127,8 @@ class PlaylistsService {
       values: [id, playlistId, songId],
     };
 
+    await this._cacheService.delete(`playlists:${playlistId}`);
+
     const result = await this._pool.query(query);
 
     if (!result.rowCount) {
@@ -136,16 +139,23 @@ class PlaylistsService {
   }
 
   async getPlaylistSongs(playlistId) {
-    const query = {
-      text: `SELECT songs.id, songs.title, songs.performer FROM songs
-      LEFT JOIN playlistsongs ON playlistsongs.song_id = songs.id
-      WHERE playlistsongs.playlist_id = $1 GROUP BY songs.id`,
-      values: [playlistId],
-    };
+    try {
+      const result = await this._cacheService.get(`playlists:${playlistId}`);
+      return JSON.parse(result);
+    } catch (error) {
+      const query = {
+        text: `SELECT songs.id, songs.title, songs.performer FROM songs
+        LEFT JOIN playlistsongs ON playlistsongs.song_id = songs.id
+        WHERE playlistsongs.playlist_id = $1 GROUP BY songs.id`,
+        values: [playlistId],
+      };
 
-    const result = await this._pool.query(query);
+      const result = await this._pool.query(query);
 
-    return result.rows.map(mapDBToModel);
+      await this._cacheService.set(`playlists:${playlistId}`, JSON.stringify(result.rows));
+
+      return result.rows.map(mapDBToModel);
+    }
   }
 
   async deletePlaylistSongById(playlistId, songId) {
@@ -159,6 +169,8 @@ class PlaylistsService {
     if (!result.rowCount) {
       throw new InvariantError('Lagu gagal dihapus dari playlist.Id lagu tidak ditemukan');
     }
+
+    await this._cacheService.delete(`playlists:${playlistId}`);
   }
 }
 
